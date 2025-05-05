@@ -36,7 +36,7 @@ public class HelloWorld {
     @FunctionName("HelloWorld")
     public void logCustomTriggerInput(
             @McpToolTrigger(
-                    toolName = "getsnippets",
+                    toolName = "helloWorld",
                     description = "Gets code snippets from your snippet collection.",
                     toolProperties = ARGUMENTS
             )
