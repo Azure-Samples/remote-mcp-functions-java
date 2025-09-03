@@ -6,18 +6,15 @@ import com.microsoft.azure.functions.OutputBinding;
 import com.microsoft.azure.functions.annotation.BlobInput;
 import com.microsoft.azure.functions.annotation.BlobOutput;
 import com.microsoft.azure.functions.annotation.FunctionName;
+import com.microsoft.azure.functions.annotation.McpToolProperty;
 import com.microsoft.azure.functions.annotation.McpToolTrigger;
 import com.microsoft.azure.functions.annotation.StorageAccount;
-
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 /**
  * This class contains two Azure Functions that demonstrate saving and retrieving text snippets
  * from Azure Blob storage, triggered by an MCP Tool Trigger annotation.
  */
 public class Snippets {
-
     /**
      * The property name for the snippet's name in the JSON input.
      */
@@ -38,39 +35,6 @@ public class Snippets {
             "snippets/{mcptoolargs." + SNIPPET_NAME_PROPERTY_NAME + "}.json";
 
     /**
-     * The JSON schema describing the properties required to save a snippet:
-     * "snippetName" and "snippet".
-     *
-     * This string is recognized by the MCP tool system to describe what arguments it expects.
-     */
-    public static final String SAVE_SNIPPET_ARGUMENTS =
-            "[\n" +
-                    "  {\n" +
-                    "    \"propertyName\":\"" + SNIPPET_NAME_PROPERTY_NAME + "\",\n" +
-                    "    \"propertyType\":\"string\",\n" +
-                    "    \"description\":\"The name of the snippet.\"\n" +
-                    "  },\n" +
-                    "  {\n" +
-                    "    \"propertyName\":\"" + SNIPPET_PROPERTY_NAME + "\",\n" +
-                    "    \"propertyType\":\"string\",\n" +
-                    "    \"description\":\"The content of the snippet.\"\n" +
-                    "  }\n" +
-                    "]";
-
-    /**
-     * The JSON schema describing the properties required to retrieve a snippet:
-     * only "snippetName".
-     */
-    public static final String GET_SNIPPET_ARGUMENTS =
-            "[\n" +
-                    "  {\n" +
-                    "    \"propertyName\":\"" + SNIPPET_NAME_PROPERTY_NAME + "\",\n" +
-                    "    \"propertyType\":\"string\",\n" +
-                    "    \"description\":\"The name of the snippet.\"\n" +
-                    "  }\n" +
-                    "]";
-
-    /**
      * Azure Snippets that handles saving a text snippet to Azure Blob Storage.
      * <p>
      * The function is triggered via an MCP Tool Trigger. The JSON input (passed as {@code toolArguments})
@@ -86,24 +50,27 @@ public class Snippets {
     @StorageAccount("AzureWebJobsStorage")
     public void saveSnippet(
             @McpToolTrigger(
-                    toolName = "saveSnippets",
-                    description = "Saves a text snippet to your snippets collection.",
-                    toolProperties = SAVE_SNIPPET_ARGUMENTS
-            )
+                    name = "saveSnippets",
+                    description = "Saves a text snippet to your snippets collection.")
             String toolArguments,
+            @McpToolProperty(
+                name = SNIPPET_NAME_PROPERTY_NAME,
+                propertyType = "string",
+                description = "The name of the snippet.",
+                required = true)
+            String snippetName,
+            @McpToolProperty(
+                name = SNIPPET_PROPERTY_NAME,
+                propertyType = "string",
+                description = "The content of the snippet.",
+                required = true)
+            String snippet,
             @BlobOutput(name = "outputBlob", path = BLOB_PATH)
             OutputBinding<String> outputBlob,
             final ExecutionContext context
     ) {
         // Log the entire incoming JSON for debugging
         context.getLogger().info(toolArguments);
-
-        // Parse the JSON and extract the snippetName/snippet fields
-        JsonObject arguments = JsonParser.parseString(toolArguments)
-                .getAsJsonObject()
-                .getAsJsonObject("arguments");
-        String snippetName = arguments.get(SNIPPET_NAME_PROPERTY_NAME).getAsString();
-        String snippet = arguments.get(SNIPPET_PROPERTY_NAME).getAsString();
 
         // Log the snippet name and content
         context.getLogger().info("Saving snippet with name: " + snippetName);
@@ -129,24 +96,21 @@ public class Snippets {
     @StorageAccount("AzureWebJobsStorage")
     public void getSnippet(
             @McpToolTrigger(
-                    toolName = "getSnippets",
-                    description = "Gets a text snippet from your snippets collection.",
-                    toolProperties = GET_SNIPPET_ARGUMENTS
-            )
+                name = "getSnippets",
+                description = "Gets a text snippet from your snippets collection.")
             String toolArguments,
+            @McpToolProperty(
+                name = SNIPPET_NAME_PROPERTY_NAME,
+                propertyType = "string",
+                description = "The name of the snippet.",
+                required = true)
+            String snippetName,
             @BlobInput(name = "inputBlob", path = BLOB_PATH)
             String inputBlob,
             final ExecutionContext context
     ) {
         // Log the entire incoming JSON for debugging
         context.getLogger().info(toolArguments);
-
-        // Parse the JSON and get the snippetName field
-        String snippetName = JsonParser.parseString(toolArguments)
-                .getAsJsonObject()
-                .getAsJsonObject("arguments")
-                .get(SNIPPET_NAME_PROPERTY_NAME)
-                .getAsString();
 
         // Log the snippet name and the fetched snippet content from the blob
         context.getLogger().info("Retrieving snippet with name: " + snippetName);

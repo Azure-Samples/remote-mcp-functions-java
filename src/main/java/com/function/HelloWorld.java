@@ -2,6 +2,7 @@ package com.function;
 
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.annotation.FunctionName;
+import com.microsoft.azure.functions.annotation.McpToolProperty;
 import com.microsoft.azure.functions.annotation.McpToolTrigger;
 
 /**
@@ -9,20 +10,6 @@ import com.microsoft.azure.functions.annotation.McpToolTrigger;
  * This function is triggered by an MCP Tool Trigger, which provides the input JSON.
  */
 public class HelloWorld {
-    /**
-     * The JSON schema describing the arguments expected by the "getsnippets" tool.
-     * In this example, it expects one property named "triggerInput" which is a string.
-     */
-    public static final String ARGUMENTS = """
-        [
-           {
-              "propertyName": "triggerInput",
-              "propertyType": "string",
-              "description": "input string"
-           }
-        ]
-    """;
-
     /**
      * Azure function that:
      * <ul>
@@ -36,17 +23,20 @@ public class HelloWorld {
     @FunctionName("HelloWorld")
     public void logCustomTriggerInput(
             @McpToolTrigger(
-                    toolName = "helloWorld",
-                    description = "Gets code snippets from your snippet collection.",
-                    toolProperties = ARGUMENTS
-            )
-            String triggerInput,
+                    name = "helloWorld",
+                    description = "Gets code snippets from your snippet collection.")
+            String toolArguments,
+            @McpToolProperty(
+                name = "message",
+                propertyType = "string",
+                description = "The message to be logged.",
+                required = true)
+            String message,
             final ExecutionContext context
     ) {
-        // Log the input passed in from the MCP tool
-        context.getLogger().info(triggerInput);
-
-        // Log a simple message
         context.getLogger().info("Hello, World!");
+        // Log a simple message
+        context.getLogger().info("Message:");
+        context.getLogger().info(message);
     }
 }
