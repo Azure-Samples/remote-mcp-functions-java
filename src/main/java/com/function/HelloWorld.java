@@ -13,18 +13,20 @@ public class HelloWorld {
     /**
      * Azure function that:
      * <ul>
-     *   <li>Logs the {@code triggerInput} provided by the MCP tool.</li>
+     *   <li>Logs the {@code toolArguments} provided by the MCP tool.</li>
      *   <li>Logs "Hello, World!" to demonstrate a simple response.</li>
+     *   <li>Logs the provided message parameter.</li>
      * </ul>
      *
-     * @param triggerInput The JSON argument provided by the MCP tool. Extracted as a string.
-     * @param context      The execution context for logging and tracing function execution.
+     * @param toolArguments The JSON argument provided by the MCP tool. Extracted as a string.
+     * @param message       The message to be logged, provided as an MCP tool property.
+     * @param context       The execution context for logging and tracing function execution.
      */
     @FunctionName("HelloWorld")
     public void logCustomTriggerInput(
             @McpToolTrigger(
                     name = "helloWorld",
-                    description = "Gets code snippets from your snippet collection.")
+                    description = "Says hello and logs the message that is provided.")
             String toolArguments,
             @McpToolProperty(
                 name = "message",

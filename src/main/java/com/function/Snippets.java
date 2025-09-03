@@ -35,14 +35,15 @@ public class Snippets {
             "snippets/{mcptoolargs." + SNIPPET_NAME_PROPERTY_NAME + "}.json";
 
     /**
-     * Azure Snippets that handles saving a text snippet to Azure Blob Storage.
+     * Azure Function that handles saving a text snippet to Azure Blob Storage.
      * <p>
-     * The function is triggered via an MCP Tool Trigger. The JSON input (passed as {@code toolArguments})
-     * must include "snippetName" and "snippet" as per {@link #SAVE_SNIPPET_ARGUMENTS}.
-     * <p>
-     * The snippet content is then saved to a blob at a path derived from the snippet name.
+     * The function is triggered via an MCP Tool Trigger. The snippet name and content
+     * are provided as MCP tool properties, and the snippet content is saved to a blob
+     * at a path derived from the snippet name.
      *
-     * @param toolArguments The JSON input from the MCP tool, containing snippetName/snippet.
+     * @param toolArguments The JSON input from the MCP tool trigger.
+     * @param snippetName   The name of the snippet, provided as an MCP tool property.
+     * @param snippet       The content of the snippet, provided as an MCP tool property.
      * @param outputBlob    The Azure Blob output binding where the snippet content is stored.
      * @param context       The execution context for logging.
      */
@@ -81,14 +82,14 @@ public class Snippets {
     }
 
     /**
-     * Azure Snippets that handles retrieving a text snippet from Azure Blob Storage.
+     * Azure Function that handles retrieving a text snippet from Azure Blob Storage.
      * <p>
-     * The function is triggered by an MCP Tool Trigger. The JSON input (passed as {@code toolArguments})
-     * must include "snippetName" as per {@link #GET_SNIPPET_ARGUMENTS}.
-     * <p>
-     * The snippet content is then read from the blob at the path derived from the snippet name.
+     * The function is triggered by an MCP Tool Trigger. The snippet name is provided
+     * as an MCP tool property, and the snippet content is read from the blob at the 
+     * path derived from the snippet name.
      *
-     * @param toolArguments The JSON input from the MCP tool, containing snippetName.
+     * @param toolArguments The JSON input from the MCP tool trigger.
+     * @param snippetName   The name of the snippet to retrieve, provided as an MCP tool property.
      * @param inputBlob     The Azure Blob input binding that fetches the snippet content.
      * @param context       The execution context for logging.
      */
