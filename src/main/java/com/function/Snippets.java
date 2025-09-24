@@ -41,11 +41,11 @@ public class Snippets {
      * are provided as MCP tool properties, and the snippet content is saved to a blob
      * at a path derived from the snippet name.
      *
-     * @param toolArguments The JSON input from the MCP tool trigger.
+     * @param mcpToolInvocationContext The JSON input from the MCP tool trigger.
      * @param snippetName   The name of the snippet, provided as an MCP tool property.
      * @param snippet       The content of the snippet, provided as an MCP tool property.
      * @param outputBlob    The Azure Blob output binding where the snippet content is stored.
-     * @param context       The execution context for logging.
+     * @param functionExecutionContext       The execution context for logging.
      */
     @FunctionName("SaveSnippets")
     @StorageAccount("AzureWebJobsStorage")
@@ -53,7 +53,7 @@ public class Snippets {
             @McpToolTrigger(
                     name = "saveSnippets",
                     description = "Saves a text snippet to your snippets collection.")
-            String toolArguments,
+            String mcpToolInvocationContext,
             @McpToolProperty(
                 name = SNIPPET_NAME_PROPERTY_NAME,
                 propertyType = "string",
@@ -68,14 +68,14 @@ public class Snippets {
             String snippet,
             @BlobOutput(name = "outputBlob", path = BLOB_PATH)
             OutputBinding<String> outputBlob,
-            final ExecutionContext context
+            final ExecutionContext functionExecutionContext
     ) {
         // Log the entire incoming JSON for debugging
-        context.getLogger().info(toolArguments);
+        functionExecutionContext.getLogger().info(mcpToolInvocationContext);
 
         // Log the snippet name and content
-        context.getLogger().info("Saving snippet with name: " + snippetName);
-        context.getLogger().info("Snippet content:\n" + snippet);
+        functionExecutionContext.getLogger().info("Saving snippet with name: " + snippetName);
+        functionExecutionContext.getLogger().info("Snippet content:\n" + snippet);
 
         // Write the snippet content to the output blob
         outputBlob.setValue(snippet);
@@ -88,10 +88,10 @@ public class Snippets {
      * as an MCP tool property, and the snippet content is read from the blob at the 
      * path derived from the snippet name.
      *
-     * @param toolArguments The JSON input from the MCP tool trigger.
+     * @param mcpToolInvocationContext The JSON input from the MCP tool trigger.
      * @param snippetName   The name of the snippet to retrieve, provided as an MCP tool property.
      * @param inputBlob     The Azure Blob input binding that fetches the snippet content.
-     * @param context       The execution context for logging.
+     * @param functionExecutionContext       The execution context for logging.
      */
     @FunctionName("GetSnippets")
     @StorageAccount("AzureWebJobsStorage")
@@ -99,7 +99,7 @@ public class Snippets {
             @McpToolTrigger(
                 name = "getSnippets",
                 description = "Gets a text snippet from your snippets collection.")
-            String toolArguments,
+            String mcpToolInvocationContext,
             @McpToolProperty(
                 name = SNIPPET_NAME_PROPERTY_NAME,
                 propertyType = "string",
@@ -108,14 +108,14 @@ public class Snippets {
             String snippetName,
             @BlobInput(name = "inputBlob", path = BLOB_PATH)
             String inputBlob,
-            final ExecutionContext context
+            final ExecutionContext functionExecutionContext
     ) {
         // Log the entire incoming JSON for debugging
-        context.getLogger().info(toolArguments);
+        functionExecutionContext.getLogger().info(mcpToolInvocationContext);
 
         // Log the snippet name and the fetched snippet content from the blob
-        context.getLogger().info("Retrieving snippet with name: " + snippetName);
-        context.getLogger().info("Snippet content:");
-        context.getLogger().info(inputBlob);
+        functionExecutionContext.getLogger().info("Retrieving snippet with name: " + snippetName);
+        functionExecutionContext.getLogger().info("Snippet content:");
+        functionExecutionContext.getLogger().info(inputBlob);
     }
 }
