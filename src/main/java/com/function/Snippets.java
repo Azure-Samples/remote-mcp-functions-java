@@ -49,7 +49,7 @@ public class Snippets {
      */
     @FunctionName("SaveSnippets")
     @StorageAccount("AzureWebJobsStorage")
-    public void saveSnippet(
+    public String saveSnippet(
             @McpToolTrigger(
                     name = "saveSnippets",
                     description = "Saves a text snippet to your snippets collection.")
@@ -79,6 +79,8 @@ public class Snippets {
 
         // Write the snippet content to the output blob
         outputBlob.setValue(snippet);
+        
+        return "Successfully saved snippet '" + snippetName + "' with " + snippet.length() + " characters.";
     }
 
     /**
@@ -95,7 +97,7 @@ public class Snippets {
      */
     @FunctionName("GetSnippets")
     @StorageAccount("AzureWebJobsStorage")
-    public void getSnippet(
+    public String getSnippet(
             @McpToolTrigger(
                 name = "getSnippets",
                 description = "Gets a text snippet from your snippets collection.")
@@ -117,5 +119,12 @@ public class Snippets {
         functionExecutionContext.getLogger().info("Retrieving snippet with name: " + snippetName);
         functionExecutionContext.getLogger().info("Snippet content:");
         functionExecutionContext.getLogger().info(inputBlob);
+        
+        // Return the snippet content or a not found message
+        if (inputBlob != null && !inputBlob.trim().isEmpty()) {
+            return inputBlob;
+        } else {
+            return "Snippet '" + snippetName + "' not found.";
+        }
     }
 }

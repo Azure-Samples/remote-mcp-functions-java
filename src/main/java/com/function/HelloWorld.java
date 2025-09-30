@@ -24,7 +24,7 @@ public class HelloWorld {
      * @param functionExecutionContext The execution context for logging and tracing function execution.
      */
     @FunctionName("HelloWorld")
-    public void logCustomTriggerInput(
+    public String logCustomTriggerInput(
             @McpToolTrigger(
                     name = "helloWorld",
                     description = "Says hello and logs the message that is provided.")
@@ -44,5 +44,7 @@ public class HelloWorld {
         functionExecutionContext.getLogger().info("Message from POJO: " + mcpToolInvocationContext.getArguments().get("message").getAsString());
         // Also log the message from the MCP property
         functionExecutionContext.getLogger().info("Message from MCP Property: " + message);
+        
+        return "Hello! I received and processed your message: '" + message + "'";
     }
 }
