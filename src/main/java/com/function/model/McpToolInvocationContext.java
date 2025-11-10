@@ -1,25 +1,25 @@
 package com.function.model;
 
 import com.google.gson.JsonObject;
-import com.google.gson.annotations.SerializedName;
 
 /**
- * MCP tool invocation context that can handle any type of arguments.
- * Uses JsonObject for maximum flexibility across different MCP tools.
+ * MCP tool invocation context that handles different transport scenarios.
+ * Works with both HTTP streamable and SSE connections by using flexible JsonObject fields.
  */
 public class McpToolInvocationContext {
     private String name;
     private JsonObject arguments;
     
-    @SerializedName("_meta")
-    private JsonObject meta;
-
+    // Optional fields that may or may not be present depending on transport
+    private String sessionid;           // Present in http-streamable
+    private JsonObject clientinfo;      // Present in http-sse  
+    private JsonObject transport;       // Present in both
+    
     public McpToolInvocationContext() {}
 
-    public McpToolInvocationContext(String name, JsonObject arguments, JsonObject meta) {
+    public McpToolInvocationContext(String name, JsonObject arguments) {
         this.name = name;
         this.arguments = arguments;
-        this.meta = meta;
     }
 
     public String getName() {
@@ -45,19 +45,42 @@ public class McpToolInvocationContext {
     }
 
     /**
-     * Gets the entire _meta object.
-     * You can extract specific fields using methods like:
-     * - meta.get("progressToken").getAsInt()
+     * Gets the session ID (present in http-streamable transport).
      */
-    public JsonObject getMeta() {
-        return meta;
+    public String getSessionid() {
+        return sessionid;
+    }
+
+    public void setSessionid(String sessionid) {
+        this.sessionid = sessionid;
     }
 
     /**
-     * Sets the _meta object.
+     * Gets the client info object (present in http-sse transport).
+     * You can extract fields like:
+     * - clientinfo.get("name").getAsString()
+     * - clientinfo.get("version").getAsString()
      */
-    public void setMeta(JsonObject meta) {
-        this.meta = meta;
+    public JsonObject getClientinfo() {
+        return clientinfo;
+    }
+
+    public void setClientinfo(JsonObject clientinfo) {
+        this.clientinfo = clientinfo;
+    }
+
+    /**
+     * Gets the transport information (present in both transports).
+     * You can extract fields like:
+     * - transport.get("name").getAsString()
+     * - transport.get("properties").getAsJsonObject()
+     */
+    public JsonObject getTransport() {
+        return transport;
+    }
+
+    public void setTransport(JsonObject transport) {
+        this.transport = transport;
     }
 
     /**
@@ -67,12 +90,37 @@ public class McpToolInvocationContext {
         return arguments != null && arguments.has(argumentName);
     }
 
+    /**
+     * Convenience method to get the transport type.
+     */
+    public String getTransportType() {
+        return transport != null && transport.has("name") 
+            ? transport.get("name").getAsString() 
+            : null;
+    }
+
+    /**
+     * Convenience method to check if this is HTTP streamable transport.
+     */
+    public boolean isHttpStreamable() {
+        return "http-streamable".equals(getTransportType());
+    }
+
+    /**
+     * Convenience method to check if this is HTTP SSE transport.
+     */
+    public boolean isHttpSse() {
+        return "http-sse".equals(getTransportType());
+    }
+
     @Override
     public String toString() {
         return "McpToolInvocationContext{" +
                 "name='" + name + '\'' +
                 ", arguments=" + arguments +
-                ", meta=" + meta +
+                ", sessionid='" + sessionid + '\'' +
+                ", clientinfo=" + clientinfo +
+                ", transport=" + transport +
                 '}';
     }
 }

@@ -58,13 +58,13 @@ public class Snippets {
                 name = SNIPPET_NAME_PROPERTY_NAME,
                 propertyType = "string",
                 description = "The name of the snippet.",
-                required = true)
+                isRequired = true)
             String snippetName,
             @McpToolProperty(
                 name = SNIPPET_PROPERTY_NAME,
                 propertyType = "string",
                 description = "The content of the snippet.",
-                required = true)
+                isRequired = true)
             String snippet,
             @BlobOutput(name = "outputBlob", path = BLOB_PATH)
             OutputBinding<String> outputBlob,
@@ -106,7 +106,7 @@ public class Snippets {
                 name = SNIPPET_NAME_PROPERTY_NAME,
                 propertyType = "string",
                 description = "The name of the snippet.",
-                required = true)
+                isRequired = true)
             String snippetName,
             @BlobInput(name = "inputBlob", path = BLOB_PATH)
             String inputBlob,

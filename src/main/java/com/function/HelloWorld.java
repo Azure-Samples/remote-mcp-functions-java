@@ -20,31 +20,44 @@ public class HelloWorld {
      * </ul>
      *
      * @param mcpToolInvocationContext The MCP tool invocation context automatically deserialized from JSON into a generic structure.
-     * @param message The message to be logged, provided as an MCP tool property.
+     * @param messages The message to be logged, provided as an MCP tool property.
      * @param functionExecutionContext The execution context for logging and tracing function execution.
      */
     @FunctionName("HelloWorld")
     public String logCustomTriggerInput(
             @McpToolTrigger(
                     name = "helloWorld",
-                    description = "Says hello and logs the message that is provided.")
+                    description = "Says hello and logs the messages that are provided.")
             McpToolInvocationContext mcpToolInvocationContext,
             @McpToolProperty(
-                name = "message",
+                name = "messages",
                 propertyType = "string",
-                description = "The message to be logged.",
-                required = true)
-            String message,
+                description = "The messages to be logged.",
+                isRequired = true,
+                isArray = true)
+            String messages,
             final ExecutionContext functionExecutionContext
     ) {
         functionExecutionContext.getLogger().info("Hello, World!");
         functionExecutionContext.getLogger().info("Tool Name: " + mcpToolInvocationContext.getName());
-        functionExecutionContext.getLogger().info("Progress Token: " + mcpToolInvocationContext.getMeta().get("progressToken").getAsInt());
-        // Access arguments using direct JsonObject access
-        functionExecutionContext.getLogger().info("Message from POJO: " + mcpToolInvocationContext.getArguments().get("message").getAsString());
-        // Also log the message from the MCP property
-        functionExecutionContext.getLogger().info("Message from MCP Property: " + message);
+        functionExecutionContext.getLogger().info("Transport Type: " + mcpToolInvocationContext.getTransportType());
         
-        return "Hello! I received and processed your message: '" + message + "'";
+        // Handle different transport types
+        if (mcpToolInvocationContext.isHttpStreamable()) {
+            functionExecutionContext.getLogger().info("Session ID: " + mcpToolInvocationContext.getSessionid());
+        } else if (mcpToolInvocationContext.isHttpSse()) {
+            if (mcpToolInvocationContext.getClientinfo() != null) {
+                functionExecutionContext.getLogger().info("Client: " + 
+                    mcpToolInvocationContext.getClientinfo().get("name").getAsString() + " v" +
+                    mcpToolInvocationContext.getClientinfo().get("version").getAsString());
+            }
+        }
+        
+        // Access arguments using direct JsonObject access
+        functionExecutionContext.getLogger().info("Messages from POJO: " + mcpToolInvocationContext.getArguments().get("messages").getAsString());
+        // Also log the message from the MCP property
+        functionExecutionContext.getLogger().info("Messages from MCP Property: " + messages);
+        
+        return "Hello! I received and processed your messages: '" + messages + "' via " + mcpToolInvocationContext.getTransportType();
     }
 }
