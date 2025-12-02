@@ -2,12 +2,12 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Attach to Java Functions",
             "type": "java",
+            "name": "Attach to Azure Functions",
             "request": "attach",
-            "hostName": "127.0.0.1",
+            "hostName": "localhost",
             "port": 5005,
-            "preLaunchTask": "func: host start"
+            "projectName": "HelloWorld"
         }
     ]
 }
