@@ -8,7 +8,7 @@
 			"problemMatcher": "$func-java-watch",
 			"isBackground": true,
 			"options": {
-				"cwd": "${workspaceFolder}/target/azure-functions/HelloWorld-1847329562184"
+				"cwd": "${workspaceFolder}/target/azure-functions/HelloWorld-MCP"
 			},
 			"dependsOn": "package (functions)"
 		},
