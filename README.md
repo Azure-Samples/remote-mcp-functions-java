@@ -28,7 +28,7 @@ The server is secured by design (system keys + HTTPS), supports OAuth via EasyAu
 | Purpose | Tool | Notes |
 |---------|------|-------|
 | **Java build + run** | JDK 17 (or newer) | Java 8 runtime still works but JDK 17 is recommended. |
-| **Local Functions runtime** | [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local) ≥ `4.0.7030` | Used by `func start` / `mvn azure-functions:run`. |
+| **Local Functions runtime** | [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local) ≥ `4.0.7030` | Used by `mvn azure-functions:run`. |
 | **Provision & deploy** | [Azure Developer CLI (azd)](https://aka.ms/azd) | Simplifies end-to-end deployment. |
 | **IDE (optional)** | Visual Studio Code + [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions) | One-click debug & log streaming. |
 | **Blob Storage emulator** | [Docker](https://www.docker.com/) to run **Azurite** | Needed only when running locally with `UseDevelopmentStorage=true`. |
@@ -58,7 +58,6 @@ mvn clean package
 
 # 2 – Start the Functions host (via Maven wrapper)
 mvn azure-functions:run
-#    └─ or use `func start` if you prefer
 ```
 
 The SSE endpoint will be available at:
@@ -101,7 +100,7 @@ http://127.0.0.1:7071/runtime/webhooks/mcp/sse
 # In a second terminal
 npx @modelcontextprotocol/inspector node build/index.js
 # If the Functions host isn’t running, start it:
-# func start
+# mvn azure-functions:run
 ```
 
 * Open the Inspector UI (URL printed in the terminal).
