@@ -54,7 +54,7 @@ public class HelloWorld {
         }
         
         // Access arguments using direct JsonObject access
-        functionExecutionContext.getLogger().info("Messages from POJO: " + mcpToolInvocationContext.getArguments().get("messages").getAsString());
+        functionExecutionContext.getLogger().info("Messages from POJO: " + mcpToolInvocationContext.getArguments().get("messages"));
         // Also log the message from the MCP property
         functionExecutionContext.getLogger().info("Messages from MCP Property: " + messages);
         
