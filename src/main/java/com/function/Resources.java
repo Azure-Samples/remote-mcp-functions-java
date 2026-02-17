@@ -2,6 +2,7 @@ package com.function;
 
 import com.microsoft.azure.functions.ExecutionContext;
 import com.microsoft.azure.functions.annotation.FunctionName;
+import com.microsoft.azure.functions.annotation.McpMetadata;
 import com.microsoft.azure.functions.annotation.McpResourceTrigger;
 
 /**
@@ -11,10 +12,12 @@ import com.microsoft.azure.functions.annotation.McpResourceTrigger;
 public class Resources {
 
     /**
-     * Azure Function that exposes a text resource via MCP.
+     * Azure Function that exposes a text resource via MCP, with metadata.
      * <p>
      * When an MCP client requests the "file://readme.md" resource,
      * this function returns the readme content as plain text.
+     * The {@code @McpMetadata} annotation attaches arbitrary JSON that is
+     * surfaced in the MCP protocol's {@code _meta} field on {@code resources/list}.
      *
      * @param context                  The resource invocation context JSON from the MCP trigger.
      * @param functionExecutionContext The execution context for logging.
@@ -28,6 +31,9 @@ public class Resources {
                     resourceName = "readme",
                     description = "Application readme file with usage instructions",
                     mimeType = "text/plain")
+            @McpMetadata(
+                    name = "context",
+                    json = "{\"author\": \"John Doe\", \"file\": {\"version\": 1.0, \"releaseDate\": \"2024-01-01\"}}")
             String context,
             final ExecutionContext functionExecutionContext) {
 

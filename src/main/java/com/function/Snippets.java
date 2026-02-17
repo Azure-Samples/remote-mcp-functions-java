@@ -6,6 +6,7 @@ import com.microsoft.azure.functions.OutputBinding;
 import com.microsoft.azure.functions.annotation.BlobInput;
 import com.microsoft.azure.functions.annotation.BlobOutput;
 import com.microsoft.azure.functions.annotation.FunctionName;
+import com.microsoft.azure.functions.annotation.McpMetadata;
 import com.microsoft.azure.functions.annotation.McpToolProperty;
 import com.microsoft.azure.functions.annotation.McpToolTrigger;
 import com.microsoft.azure.functions.annotation.StorageAccount;
@@ -53,6 +54,9 @@ public class Snippets {
             @McpToolTrigger(
                     name = "saveSnippets",
                     description = "Saves a text snippet to your snippets collection.")
+            @McpMetadata(
+                    name = "saveSnippets",
+                    json = "{\"version\": 1.0, \"author\": \"Jane Doe\"}")
             String mcpToolInvocationContext,
             @McpToolProperty(
                 name = SNIPPET_NAME_PROPERTY_NAME,
