@@ -87,6 +87,7 @@ yarn-error.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/mcp.json
 *.code-workspace
 
 # Local History for Visual Studio Code
@@ -118,8 +119,7 @@ buildNumber.properties
 *.tar.gz
 *.rar
 hs_err_pid*
+replay_pid*
 
-# Azure Functions
-local.settings.json
-__azurite_db*
-__blobstorage__/
+# Vite build output
+**/app/dist/

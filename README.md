@@ -16,239 +16,141 @@ urlFragment: remote-mcp-functions-java
 
 # Getting Started with Remote MCP Servers using Azure Functions (Java)
 
-This quick-start shows how to build and deploy a **remote MCP server** with Azure Functions (Java).  
-You can run it locally for debugging, then ship it to the cloud with `azd up` in minutes.  
-The server is secured by design (system keys + HTTPS), supports OAuth via EasyAuth or API Management, and can be isolated inside a VNet.
+This is a quickstart template to easily build and deploy custom remote MCP servers to the cloud using Azure Functions. You can clone/restore/run on your local machine with debugging, and `azd up` to have it in the cloud in a couple minutes.
 
-[Watch the overview video.](https://www.youtube.com/watch?v=U9DsLcP5vEk)
----
+The MCP server is configured with [built-in authentication](https://learn.microsoft.com/en-us/azure/app-service/overview-authentication-authorization) using Microsoft Entra as the identity provider.
+
+You can also use [API Management](https://learn.microsoft.com/azure/api-management/secure-mcp-servers) to secure the server, as well as network isolation using VNET.
+
+If you're looking for this sample in more languages check out the [.NET/C#](https://github.com/Azure-Samples/remote-mcp-functions-dotnet), [Node.js/TypeScript](https://github.com/Azure-Samples/remote-mcp-functions-typescript) and [Python](https://github.com/Azure-Samples/remote-mcp-functions-python) samples.
+
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Azure-Samples/remote-mcp-functions-java)
+
+## Samples
+
+| Sample | Description |
+|--------|-------------|
+| [**FunctionsMcpTool**](samples/FunctionsMcpTool/) | MCP tools with Azure Blob Storage - say hello, save and retrieve code snippets. |
+| [**McpWeatherApp**](samples/McpWeatherApp/) | MCP Apps - a weather tool with an interactive UI (MCP resource + metadata). |
 
 ## Prerequisites
 
-| Purpose | Tool | Notes |
-|---------|------|-------|
-| **Java build + run** | JDK 17 (or newer) | Java 8 runtime still works but JDK 17 is recommended. |
-| **Local Functions runtime** | [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local) ≥ `4.0.7030` | Used by `mvn azure-functions:run`. |
-| **Provision & deploy** | [Azure Developer CLI (azd)](https://aka.ms/azd) | Simplifies end-to-end deployment. |
-| **IDE (optional)** | Visual Studio Code + [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions) | One-click debug & log streaming. |
-| **Blob Storage emulator** | [Docker](https://www.docker.com/) to run **Azurite** | Needed only when running locally with `UseDevelopmentStorage=true`. |
++ [JDK 17](https://learn.microsoft.com/java/openjdk/download) (or newer)
++ [Apache Maven](https://maven.apache.org/download.cgi)
++ [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local) >= `4.0.7030`
++ [Azure Developer CLI](https://aka.ms/azd) (for deployment)
++ [Visual Studio Code](https://code.visualstudio.com/) + [Azure Functions extension](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-azurefunctions) (recommended)
 
----
+## Run and test locally
 
-## Prepare your local environment
+### FunctionsMcpTool
 
-> **Why Azurite?**   
-> The `SaveSnippet` / `GetSnippet` tools persist snippets in Azure Blob Storage.  
-> Azurite emulates that storage account on your dev machine.
+> **Requires [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite)** for local blob storage. Start it with `docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite` or use the Azurite VS Code extension.
 
-```bash
-docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 \
-       mcr.microsoft.com/azure-storage/azurite
-````
-
-If you prefer the Azurite **VS Code extension**, run **“Azurite: Start”** from the command palette instead.
-
----
-
-## Run the MCP server locally
-
-```bash
-# 1 – Build the project
+```
+cd samples/FunctionsMcpTool
 mvn clean package
-
-# 2 – Start the Functions host (via Maven wrapper)
 mvn azure-functions:run
 ```
 
-The SSE endpoint will be available at:
+Open **.vscode/mcp.json**, click **Start** above *local-mcp-function*, then try prompts in Copilot agent mode:
 
 ```
-http://127.0.0.1:7071/runtime/webhooks/mcp/sse
+Say Hello
+Save this snippet as snippet1
+Retrieve snippet1
 ```
 
----
+See [samples/FunctionsMcpTool/README.md](samples/FunctionsMcpTool/README.md) for full details including MCP Inspector setup.
 
-## Try the *local* MCP server
+### McpWeatherApp
 
-### A. GitHub Copilot in VS Code
-
-1. **Add MCP Server** → choose **HTTP (Server-Sent Events)**.
-
-2. URL:
-
-   ```text
-   http://127.0.0.1:7071/runtime/webhooks/mcp/sse
-   ```
-
-3. Give it any server-ID you like and save to *User* or *Workspace* settings.
-
-4. **List MCP Servers** → **Start** your new server.
-
-5. In Copilot Chat (agent-mode) try prompts such as:
-
-   ```text
-   Say Hello
-   Save this snippet as snippet1
-   Retrieve snippet1 and apply to MyFile.java
-   ```
-
-6. When finished, **Stop** the server (command palette) and `Ctrl+C` the terminal running the function host.
-
-### B. MCP Inspector
-
-```bash
-# In a second terminal
-npx @modelcontextprotocol/inspector node build/index.js
-# If the Functions host isn’t running, start it:
-# mvn azure-functions:run
+```
+cd samples/McpWeatherApp/app
+npm install && npm run build
+cd ..
+mvn clean package
+mvn azure-functions:run
 ```
 
-* Open the Inspector UI (URL printed in the terminal).
-* Transport: **SSE**.
-* URL: `http://127.0.0.1:7071/runtime/webhooks/mcp/sse` → **Connect**.
-* **List Tools** → pick one → **Run Tool**.
+Open **.vscode/mcp.json**, click **Start** above *local-mcp-function*, then ask Copilot: *"What's the weather in Seattle?"*
 
-Stop both terminals with `Ctrl+C` when done.
+See [samples/McpWeatherApp/README.md](samples/McpWeatherApp/README.md) for details on MCP Apps architecture.
 
----
+## Deploy to Azure
 
-## Deploy to Azure (remote MCP)
+### Step 1: Sign in to Azure
 
-Want the function app inside a VNet *before* provisioning? Just set:
+```
+az login
+azd auth login
+```
 
-```bash
+### Step 2: Create an environment and configure
+
+```
+azd env new <environment-name>
+```
+
+Configure VS Code as an allowed client application to request access tokens from Microsoft Entra (applies to the FunctionsMcpTool service):
+
+```
+azd env set PRE_AUTHORIZED_CLIENT_IDS aebc6443-996d-45c2-90f0-388ff96faa56
+```
+
+**Optional:** Enable VNet isolation:
+
+```
 azd env set VNET_ENABLED true
 ```
 
-Then provision + deploy in one step:
+### Step 3: Deploy
 
-```bash
+Deploy both apps:
+
+```
 azd up
 ```
 
----
-
-## Connect clients to the *remote* MCP server
-
-The hosted SSE endpoint will be:
+Or deploy a specific app:
 
 ```
-https://<FUNC_APP_NAME>.azurewebsites.net/runtime/webhooks/mcp/sse
+# Deploy only the MCP Tool (with Entra auth)
+azd deploy api
+
+# Deploy only the Weather App (no auth required)
+azd deploy weather
 ```
 
-> **Key required**
-> Grab the **system key** named `mcp_extension` from the Azure Portal
-> or via CLI:
-> `az functionapp keys list --resource-group <rg> --name <func-app>`
+### Step 4: Connect to the remote MCP server
 
-### MCP Inspector
+After deployment finishes, open **.vscode/mcp.json** and click **Start** above *remote-mcp-function*. You'll be prompted for `functionapp-name` (find it in your azd command output or `/.azure/*/.env` file). You'll also be prompted to authenticate with Microsoft - click **Allow** and login with your Azure subscription email.
+
+> [!TIP]
+> Successful connect shows the number of tools the server has. You can see more details on the interactions between VS Code and server by clicking on **More... -> Show Output** above the server name.
+
+## Redeploy and clean up
+
+**Redeploy all:** Run `azd up` as many times as needed to deploy code updates.
+
+**Redeploy one service:** Use `azd deploy api` or `azd deploy weather` to redeploy a specific app.
+
+**Clean up:** Delete all Azure resources when done:
 
 ```
-https://<FUNC_APP_NAME>.azurewebsites.net/runtime/webhooks/mcp/sse?code=<mcp_extension_key>
-```
-
-### VS Code – GitHub Copilot
-
-Add a header in `mcp.json`:
-
-```jsonc
-{
-  "servers": {
-    "remote-mcp-function": {
-      "type": "sse",
-      "url": "https://<FUNC_APP_NAME>.azurewebsites.net/runtime/webhooks/mcp/sse",
-      "headers": {
-        "x-functions-key": "<mcp_extension_key>"
-      }
-    },
-    "local-mcp-function": {
-      "type": "sse",
-      "url": "http://127.0.0.1:7071/runtime/webhooks/mcp/sse"
-    }
-  }
-}
-```
-
-Start **remote-mcp-function** and chat as usual in Copilot.
-
----
-
-## Redeploy code
-
-```bash
-azd up   # Safe to run repeatedly—always overwrites the app with the latest build
-```
-
-## Clean up
-
-```bash
 azd down
 ```
 
----
-
-## Source Code Layout
-
-| Tool                           | Path                                                                                         | Description                                 |
-| ------------------------------ | -------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| **HelloWorld**                 | [`src/main/java/com/function/HelloWorld.java`](./src/main/java/com/function/HelloWorld.java) | Logs an argument then prints “Hello World”. |
-| **SaveSnippets / GetSnippets** | [`src/main/java/com/function/Snippets.java`](./src/main/java/com/function/Snippets.java)     | Saves / retrieves snippets to Blob Storage. |
-
----
-
-## How It Works
-
-<details>
-<summary>Click to expand</summary>
-
-### MCP Tool Trigger
-
-```java
-@McpToolTrigger(
-    toolName    = "saveSnippets",
-    description = "Saves a text snippet to your snippets collection.",
-    toolProperties = SAVE_SNIPPET_ARGUMENTS   // JSON schema string
-)
-```
-
-* `toolProperties` defines the JSON payload expected from the client.
-* At runtime the JSON is passed to your function in `toolArguments`.
-
-### Storage Bindings
-
-```java
-@BlobOutput(
-    name = "snippetOut",
-    path = "snippets/{mcptoolargs.snippetName}.json",
-    dataType = "binary")
-```
-
-* `SaveSnippets` writes to a blob; `GetSnippets` reads the same path.
-* The default storage account is referenced with `@StorageAccount("AzureWebJobsStorage")`.
-
-### Required SDK + Extension Bundle
-
-```xml
-<azure.functions.java.library.version>3.1.1-alpha</azure.functions.java.library.version>
-```
-
-```jsonc
-// host.json
-{
-  "extensionBundle": {
-    "id": "Microsoft.Azure.Functions.ExtensionBundle.Experimental",
-    "version": "[4.*, 5.0.0)"
-  }
-}
-```
-
-</details>
-
----
-
 ## Next Steps
 
-* Front your MCP server with **API Management** for fine-grained policies.
-* Add **EasyAuth** to use your favourite OAuth provider (including Entra ID).
-* Toggle VNet integration via `VNET_ENABLED=true` for network isolation.
-* Explore the [Model Context Protocol](https://github.com/modelcontextprotocol) ecosystem for more tools.
++ Add [API Management](https://github.com/Azure-Samples/remote-mcp-apim-functions-python) to your MCP server
++ Enable VNET using `VNET_ENABLED=true` flag
++ Learn more about [related MCP efforts from Microsoft](https://github.com/microsoft/mcp/tree/main/Resources)
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| Connection refused | Ensure Azurite is running (`docker run -p 10000:10000 -p 10001:10001 -p 10002:10002 mcr.microsoft.com/azure-storage/azurite`) |
+| API version not supported by Azurite | Pull the latest Azurite image (`docker pull mcr.microsoft.com/azure-storage/azurite`) then restart Azurite and the app |
+| `mvn clean package` fails | Ensure JDK 17+ is on your PATH (`java -version`) |

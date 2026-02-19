@@ -8,6 +8,10 @@ infra:
   path: ./infra
 services:
   api:
-    project: ./
+    project: ./samples/FunctionsMcpTool/
+    language: java
+    host: function
+  weather:
+    project: ./samples/McpWeatherApp/
     language: java
     host: function
