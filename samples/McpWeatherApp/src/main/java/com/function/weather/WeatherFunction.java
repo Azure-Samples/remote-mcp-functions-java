@@ -56,6 +56,7 @@ public class WeatherFunction {
                     name = "context",
                     uri = "ui://weather/index.html",
                     resourceName = "Weather Widget",
+                    title = "Weather Widget",
                     description = "Interactive weather display for MCP Apps",
                     mimeType = "text/html;profile=mcp-app")
             @McpMetadata(
