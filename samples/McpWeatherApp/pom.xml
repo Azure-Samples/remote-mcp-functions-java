@@ -12,8 +12,8 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
-        <azure.functions.maven.plugin.version>1.41.0-beta</azure.functions.maven.plugin.version>
-        <azure.functions.java.library.version>3.2.4-beta</azure.functions.java.library.version>
+        <azure.functions.maven.plugin.version>1.41.0</azure.functions.maven.plugin.version>
+        <azure.functions.java.library.version>3.2.4</azure.functions.java.library.version>
         <functionAppName>McpWeatherApp</functionAppName>
     </properties>
 
