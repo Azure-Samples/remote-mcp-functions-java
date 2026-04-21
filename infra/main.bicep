@@ -97,9 +97,7 @@ module api './app/api.bicep' = {
     deploymentStorageContainerName: deploymentStorageContainerName
     identityId: apiUserAssignedIdentity.outputs.identityId
     identityClientId: apiUserAssignedIdentity.outputs.identityClientId
-    appSettings: {
-      FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI: 'https://cdn-staging.functions.azure.com/public'
-    }
+    appSettings: {}
     virtualNetworkSubnetId: !vnetEnabled ? '' : serviceVirtualNetwork.outputs.appSubnetID
   }
 }
@@ -121,9 +119,7 @@ module weather './app/api.bicep' = {
     identityId: apiUserAssignedIdentity.outputs.identityId
     identityClientId: apiUserAssignedIdentity.outputs.identityClientId
     serviceName: 'weather'
-    appSettings: {
-      FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI: 'https://cdn-staging.functions.azure.com/public'
-    }
+    appSettings: {}
     virtualNetworkSubnetId: !vnetEnabled ? '' : serviceVirtualNetwork.outputs.appSubnetID
   }
 }
