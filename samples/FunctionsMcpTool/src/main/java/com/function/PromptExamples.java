@@ -27,13 +27,11 @@ public class PromptExamples {
             String context,
             @McpPromptArgument(
                     name = "code",
-                    argumentName = "code",
                     description = "The code to review",
                     isRequired = true)
             String code,
             @McpPromptArgument(
                     name = "language",
-                    argumentName = "language",
                     description = "The programming language")
             String language,
             final ExecutionContext executionContext) {
@@ -60,7 +58,6 @@ public class PromptExamples {
             String context,
             @McpPromptArgument(
                     name = "text",
-                    argumentName = "text",
                     description = "The text to summarize",
                     isRequired = true)
             String text,
