@@ -16,6 +16,7 @@ param environmentName string
 param location string
 param vnetEnabled bool
 param apiServiceName string = ''
+param weatherServiceName string = ''
 param apiUserAssignedIdentityName string = ''
 param applicationInsightsName string = ''
 param appServicePlanName string = ''
@@ -30,6 +31,8 @@ var resourceToken = toLower(uniqueString(subscription().id, environmentName, loc
 var tags = { 'azd-env-name': environmentName }
 var functionAppName = !empty(apiServiceName) ? apiServiceName : '${abbrs.webSitesFunctions}api-${resourceToken}'
 var deploymentStorageContainerName = 'app-package-${take(functionAppName, 32)}-${take(toLower(uniqueString(functionAppName, resourceToken)), 7)}'
+var weatherFunctionAppName = !empty(weatherServiceName) ? weatherServiceName : '${abbrs.webSitesFunctions}weather-${resourceToken}'
+var weatherDeploymentStorageContainerName = 'app-package-${take(weatherFunctionAppName, 32)}-${take(toLower(uniqueString(weatherFunctionAppName, resourceToken)), 7)}'
 
 // Organize resources in a resource group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -64,6 +67,21 @@ module appServicePlan './core/host/appserviceplan.bicep' = {
   }
 }
 
+// Separate plan for weather app (Flex Consumption allows only one site per plan)
+module weatherAppServicePlan './core/host/appserviceplan.bicep' = {
+  name: 'weatherappserviceplan'
+  scope: rg
+  params: {
+    name: '${abbrs.webServerFarms}weather-${resourceToken}'
+    location: location
+    tags: tags
+    sku: {
+      name: 'FC1'
+      tier: 'FlexConsumption'
+    }
+  }
+}
+
 module api './app/api.bicep' = {
   name: 'api'
   scope: rg
@@ -80,6 +98,31 @@ module api './app/api.bicep' = {
     identityId: apiUserAssignedIdentity.outputs.identityId
     identityClientId: apiUserAssignedIdentity.outputs.identityClientId
     appSettings: {
+      FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI: 'https://cdn-staging.functions.azure.com/public'
+    }
+    virtualNetworkSubnetId: !vnetEnabled ? '' : serviceVirtualNetwork.outputs.appSubnetID
+  }
+}
+
+// The weather app is a separate function app
+module weather './app/api.bicep' = {
+  name: 'weather'
+  scope: rg
+  params: {
+    name: weatherFunctionAppName
+    location: location
+    tags: tags
+    applicationInsightsName: monitoring.outputs.applicationInsightsName
+    appServicePlanId: weatherAppServicePlan.outputs.id
+    runtimeName: 'java'
+    runtimeVersion: '17'
+    storageAccountName: storage.outputs.name
+    deploymentStorageContainerName: weatherDeploymentStorageContainerName
+    identityId: apiUserAssignedIdentity.outputs.identityId
+    identityClientId: apiUserAssignedIdentity.outputs.identityClientId
+    serviceName: 'weather'
+    appSettings: {
+      FUNCTIONS_EXTENSIONBUNDLE_SOURCE_URI: 'https://cdn-staging.functions.azure.com/public'
     }
     virtualNetworkSubnetId: !vnetEnabled ? '' : serviceVirtualNetwork.outputs.appSubnetID
   }
@@ -93,7 +136,7 @@ module storage './core/storage/storage-account.bicep' = {
     name: !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
     location: location
     tags: tags
-    containers: [{name: deploymentStorageContainerName}, {name: 'snippets'}]
+    containers: [{name: deploymentStorageContainerName}, {name: weatherDeploymentStorageContainerName}, {name: 'snippets'}]
     publicNetworkAccess: vnetEnabled ? 'Disabled' : 'Enabled'
     networkAcls: !vnetEnabled ? {} : {
       defaultAction: 'Deny'
@@ -179,5 +222,6 @@ module appInsightsRoleAssignmentApi './core/monitor/appinsights-access.bicep' = 
 output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output SERVICE_API_NAME string = api.outputs.SERVICE_API_NAME
+output SERVICE_WEATHER_NAME string = weather.outputs.SERVICE_API_NAME
 output AZURE_FUNCTION_NAME string = api.outputs.SERVICE_API_NAME
 output AZURE_RESOURCE_GROUP string = rg.name

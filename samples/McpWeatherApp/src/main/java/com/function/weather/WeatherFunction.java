@@ -67,7 +67,19 @@ public class WeatherFunction {
 
         executionContext.getLogger().info("GetWeatherWidget: serving weather widget UI");
 
-        // Try loading from the filesystem (app/dist/index.html placed next to the function)
+        // Try loading relative to the jar location (required on Azure where CWD differs)
+        try {
+            java.io.File jarDir = new java.io.File(
+                    WeatherFunction.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
+            java.io.File jarRelative = new java.io.File(jarDir, "app/dist/index.html");
+            if (jarRelative.exists()) {
+                return java.nio.file.Files.readString(jarRelative.toPath(), StandardCharsets.UTF_8);
+            }
+        } catch (Exception e) {
+            executionContext.getLogger().log(Level.WARNING, "Failed to resolve jar-relative path", e);
+        }
+
+        // Fallback: try CWD-relative path (works for local dev)
         java.io.File file = new java.io.File("app/dist/index.html");
         if (file.exists()) {
             try {
