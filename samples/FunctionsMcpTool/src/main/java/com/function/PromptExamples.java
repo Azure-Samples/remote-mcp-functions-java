@@ -85,23 +85,4 @@ public class PromptExamples {
         executionContext.getLogger().info("Generating no-args prompt");
         return "This prompt requires no arguments. Please provide general guidance.";
     }
-
-    /**
-     * A prompt with inline promptArguments JSON instead of McpPromptArgument annotations.
-     * This is the alternative approach — useful when arguments are static/known at compile time.
-     */
-    @FunctionName("InlineArgsPrompt")
-    public String inlineArgsPrompt(
-            @McpPromptTrigger(
-                    name = "inline_args_prompt",
-                    description = "A prompt with arguments defined via inline JSON",
-                    title = "Inline Arguments Prompt",
-                    promptArguments = "[{\"name\":\"topic\",\"description\":\"The topic to discuss\",\"required\":false},"
-                            + "{\"name\":\"style\",\"description\":\"The writing style\",\"required\":false}]")
-            String context,
-            final ExecutionContext executionContext) {
-
-        executionContext.getLogger().info("Generating inline-args prompt");
-        return "Please write about the specified topic in the requested style.";
-    }
 }
