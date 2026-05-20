@@ -20,7 +20,7 @@ Azure Functions makes it easy to build both.
 - [JDK 17](https://learn.microsoft.com/java/openjdk/download) (or newer)
 - [Apache Maven](https://maven.apache.org/download.cgi)
 - [Node.js](https://nodejs.org/) (for building the UI)
-- [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local)
+- [Azure Functions Core Tools v4.9](https://learn.microsoft.com/azure/azure-functions/functions-run-local)
 - An MCP-compatible host (VS Code with GitHub Copilot, Claude Desktop, etc.)
 
 ## Getting Started
