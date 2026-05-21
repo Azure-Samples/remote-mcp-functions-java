@@ -38,7 +38,25 @@ cd ..
 
 This creates a bundled `app/dist/index.html` file that the function serves.
 
-### 2. Build and Run the Function App
+### 2. Add a `local.settings.json`
+
+The MCP tool trigger is not an HTTP trigger, so the Functions host requires an `AzureWebJobsStorage` connection. Create `local.settings.json` in the project root (next to `host.json`):
+
+```json
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "java"
+  }
+}
+```
+
+`UseDevelopmentStorage=true` points at [Azurite](https://learn.microsoft.com/azure/storage/common/storage-use-azurite); start it in another terminal (`azurite`) or via the VS Code Azurite extension. Alternatively, paste a real Azure Storage connection string.
+
+> The maven plugin copies `local.settings.json` into `target/azure-functions/<appname>/` during `package`. If you add or change the file after building, re-run `mvn clean package` so the staged copy is refreshed.
+
+### 3. Build and Run the Function App
 
 ```bash
 mvn clean package
@@ -47,11 +65,11 @@ mvn azure-functions:run
 
 The MCP server will be available at `http://localhost:7071/runtime/webhooks/mcp`.
 
-### 3. Connect from VS Code
+### 4. Connect from VS Code
 
 Open **.vscode/mcp.json** at the repo root. Find the server called *local-mcp-function* and click **Start** above the name.
 
-### 4. Prompt the Agent
+### 5. Prompt the Agent
 
 Ask Copilot: "What's the weather in Seattle?"
 
