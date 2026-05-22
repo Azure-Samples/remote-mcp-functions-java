@@ -19,6 +19,9 @@ This sample exposes three MCP tools:
 - [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local) >= `4.0.7030`
 - [Docker](https://www.docker.com/) (for Azurite storage emulator)
 
+> [!NOTE]
+> This sample uses the **Preview** extension bundle (`Microsoft.Azure.Functions.ExtensionBundle.Preview`) because MCP prompt bindings (`mcpPromptTrigger`, `mcpPromptArgument`) are not yet available in the standard bundle. See `host.json` for the configuration.
+
 ## Getting Started
 
 ### 1. Start the Storage Emulator
