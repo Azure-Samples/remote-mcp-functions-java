@@ -96,3 +96,16 @@ public String saveSnippet(
 **MCP Tool Properties** — Use `@McpToolProperty` to declare input parameters that the MCP client passes to your tool.
 
 **Azure Bindings** — Standard Azure Functions bindings (`@BlobInput`, `@BlobOutput`, `@StorageAccount`) work seamlessly with MCP triggers.
+
+## Troubleshooting
+
+### Image tools cause "Could not process image" errors in VS Code
+
+When using tools that return image content (`renderImage`, `getMultiContent`), you may see:
+
+```
+Request Failed: 400 {"message":"Could not process image"}
+```
+
+**What's happening:** The tools are returning content correctly — the function logic is working as expected. The image is returned and displayed successfully on the first response. However, on your *next* message, VS Code sends the full conversation history (including the image) back to the language model. The model endpoint may reject the image data in the history, causing the 400 error. This is a chat rendering/infrastructure issue, not a problem with the function app or MCP tool implementation.
+
