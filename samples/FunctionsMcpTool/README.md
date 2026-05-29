@@ -19,6 +19,9 @@ This sample exposes three MCP tools:
 - [Azure Functions Core Tools v4](https://learn.microsoft.com/azure/azure-functions/functions-run-local) >= `4.0.7030`
 - [Docker](https://www.docker.com/) (for Azurite storage emulator)
 
+> [!NOTE]
+> This sample uses the **Preview** extension bundle (`Microsoft.Azure.Functions.ExtensionBundle.Preview`) because MCP prompt bindings (`mcpPromptTrigger`, `mcpPromptArgument`) are not yet available in the standard bundle. See `host.json` for the configuration.
+
 ## Getting Started
 
 ### 1. Start the Storage Emulator
@@ -93,3 +96,16 @@ public String saveSnippet(
 **MCP Tool Properties** — Use `@McpToolProperty` to declare input parameters that the MCP client passes to your tool.
 
 **Azure Bindings** — Standard Azure Functions bindings (`@BlobInput`, `@BlobOutput`, `@StorageAccount`) work seamlessly with MCP triggers.
+
+## Troubleshooting
+
+### Image tools cause "Could not process image" errors in VS Code
+
+When using tools that return image content (`renderImage`, `getMultiContent`), you may see:
+
+```
+Request Failed: 400 {"message":"Could not process image"}
+```
+
+**What's happening:** The tools are returning content correctly — the function logic is working as expected. The image is returned and displayed successfully on the first response. However, on your *next* message, VS Code sends the full conversation history (including the image) back to the language model. The model endpoint may reject the image data in the history, causing the 400 error. This is a chat rendering/infrastructure issue, not a problem with the function app or MCP tool implementation.
+
