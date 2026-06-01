@@ -15,9 +15,8 @@ param environmentName string
 })
 param location string
 param vnetEnabled bool
-param apiServiceName string = ''
-param weatherServiceName string = ''
-param apiUserAssignedIdentityName string = ''
+param serviceName string = ''
+param userAssignedIdentityName string = ''
 param applicationInsightsName string = ''
 param appServicePlanName string = ''
 param logAnalyticsName string = ''
@@ -29,10 +28,8 @@ param disableLocalAuth bool = true
 var abbrs = loadJsonContent('./abbreviations.json')
 var resourceToken = toLower(uniqueString(subscription().id, environmentName, location))
 var tags = { 'azd-env-name': environmentName }
-var functionAppName = !empty(apiServiceName) ? apiServiceName : '${abbrs.webSitesFunctions}api-${resourceToken}'
+var functionAppName = !empty(serviceName) ? serviceName : '${abbrs.webSitesFunctions}${resourceToken}'
 var deploymentStorageContainerName = 'app-package-${take(toLower(functionAppName), 32)}-${take(toLower(uniqueString(functionAppName, resourceToken)), 7)}'
-var weatherFunctionAppName = !empty(weatherServiceName) ? weatherServiceName : '${abbrs.webSitesFunctions}weather-${resourceToken}'
-var weatherDeploymentStorageContainerName = 'app-package-${take(toLower(weatherFunctionAppName), 32)}-${take(toLower(uniqueString(weatherFunctionAppName, resourceToken)), 7)}'
 
 // Organize resources in a resource group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -41,18 +38,18 @@ resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   tags: tags
 }
 
-// User assigned managed identity to be used by the function app to reach storage and service bus
-module apiUserAssignedIdentity './core/identity/userAssignedIdentity.bicep' = {
-  name: 'apiUserAssignedIdentity'
+// User assigned managed identity for the function app
+module userAssignedIdentity './core/identity/userAssignedIdentity.bicep' = {
+  name: 'userAssignedIdentity'
   scope: rg
   params: {
     location: location
     tags: tags
-    identityName: !empty(apiUserAssignedIdentityName) ? apiUserAssignedIdentityName : '${abbrs.managedIdentityUserAssignedIdentities}api-${resourceToken}'
+    identityName: !empty(userAssignedIdentityName) ? userAssignedIdentityName : '${abbrs.managedIdentityUserAssignedIdentities}${resourceToken}'
   }
 }
 
-// The application backend is a function app
+// App Service Plan (Flex Consumption)
 module appServicePlan './core/host/appserviceplan.bicep' = {
   name: 'appserviceplan'
   scope: rg
@@ -67,21 +64,7 @@ module appServicePlan './core/host/appserviceplan.bicep' = {
   }
 }
 
-// Separate plan for weather app (Flex Consumption allows only one site per plan)
-module weatherAppServicePlan './core/host/appserviceplan.bicep' = {
-  name: 'weatherappserviceplan'
-  scope: rg
-  params: {
-    name: '${abbrs.webServerFarms}weather-${resourceToken}'
-    location: location
-    tags: tags
-    sku: {
-      name: 'FC1'
-      tier: 'FlexConsumption'
-    }
-  }
-}
-
+// Function App
 module api './app/api.bicep' = {
   name: 'api'
   scope: rg
@@ -95,36 +78,15 @@ module api './app/api.bicep' = {
     runtimeVersion: '17'
     storageAccountName: storage.outputs.name
     deploymentStorageContainerName: deploymentStorageContainerName
-    identityId: apiUserAssignedIdentity.outputs.identityId
-    identityClientId: apiUserAssignedIdentity.outputs.identityClientId
+    identityId: userAssignedIdentity.outputs.identityId
+    identityClientId: userAssignedIdentity.outputs.identityClientId
+    serviceName: 'mcp'
     appSettings: {}
     virtualNetworkSubnetId: !vnetEnabled ? '' : serviceVirtualNetwork.outputs.appSubnetID
   }
 }
 
-// The weather app is a separate function app
-module weather './app/api.bicep' = {
-  name: 'weather'
-  scope: rg
-  params: {
-    name: weatherFunctionAppName
-    location: location
-    tags: tags
-    applicationInsightsName: monitoring.outputs.applicationInsightsName
-    appServicePlanId: weatherAppServicePlan.outputs.id
-    runtimeName: 'java'
-    runtimeVersion: '17'
-    storageAccountName: storage.outputs.name
-    deploymentStorageContainerName: weatherDeploymentStorageContainerName
-    identityId: apiUserAssignedIdentity.outputs.identityId
-    identityClientId: apiUserAssignedIdentity.outputs.identityClientId
-    serviceName: 'weather'
-    appSettings: {}
-    virtualNetworkSubnetId: !vnetEnabled ? '' : serviceVirtualNetwork.outputs.appSubnetID
-  }
-}
-
-// Backing storage for Azure functions api
+// Backing storage for Azure functions
 module storage './core/storage/storage-account.bicep' = {
   name: 'storage'
   scope: rg
@@ -132,7 +94,7 @@ module storage './core/storage/storage-account.bicep' = {
     name: !empty(storageAccountName) ? storageAccountName : '${abbrs.storageStorageAccounts}${resourceToken}'
     location: location
     tags: tags
-    containers: [{name: deploymentStorageContainerName}, {name: weatherDeploymentStorageContainerName}, {name: 'snippets'}]
+    containers: [{name: deploymentStorageContainerName}, {name: 'snippets'}]
     publicNetworkAccess: vnetEnabled ? 'Disabled' : 'Enabled'
     networkAcls: !vnetEnabled ? {} : {
       defaultAction: 'Deny'
@@ -143,25 +105,25 @@ module storage './core/storage/storage-account.bicep' = {
 var StorageBlobDataOwner = 'b7e6dc6d-f1e8-4753-8033-0f276bb0955b'
 var StorageQueueDataContributor = '974c5e8b-45b9-4653-ba55-5f855dd0fb88'
 
-// Allow access from api to blob storage using a managed identity
-module blobRoleAssignmentApi 'app/storage-Access.bicep' = {
-  name: 'blobRoleAssignmentapi'
+// Allow access from app to blob storage using a managed identity
+module blobRoleAssignment 'app/storage-Access.bicep' = {
+  name: 'blobRoleAssignment'
   scope: rg
   params: {
     storageAccountName: storage.outputs.name
     roleDefinitionID: StorageBlobDataOwner
-    principalID: apiUserAssignedIdentity.outputs.identityPrincipalId
+    principalID: userAssignedIdentity.outputs.identityPrincipalId
   }
 }
 
-// Allow access from api to queue storage using a managed identity
-module queueRoleAssignmentApi 'app/storage-Access.bicep' = {
-  name: 'queueRoleAssignmentapi'
+// Allow access from app to queue storage using a managed identity
+module queueRoleAssignment 'app/storage-Access.bicep' = {
+  name: 'queueRoleAssignment'
   scope: rg
   params: {
     storageAccountName: storage.outputs.name
     roleDefinitionID: StorageQueueDataContributor
-    principalID: apiUserAssignedIdentity.outputs.identityPrincipalId
+    principalID: userAssignedIdentity.outputs.identityPrincipalId
   }
 }
 
@@ -203,21 +165,20 @@ module monitoring './core/monitor/monitoring.bicep' = {
 
 var monitoringRoleDefinitionId = '3913510d-42f4-4e42-8a64-420c390055eb' // Monitoring Metrics Publisher role ID
 
-// Allow access from api to application insights using a managed identity
-module appInsightsRoleAssignmentApi './core/monitor/appinsights-access.bicep' = {
-  name: 'appInsightsRoleAssignmentapi'
+// Allow access from app to application insights using a managed identity
+module appInsightsRoleAssignment './core/monitor/appinsights-access.bicep' = {
+  name: 'appInsightsRoleAssignment'
   scope: rg
   params: {
     appInsightsName: monitoring.outputs.applicationInsightsName
     roleDefinitionID: monitoringRoleDefinitionId
-    principalID: apiUserAssignedIdentity.outputs.identityPrincipalId
+    principalID: userAssignedIdentity.outputs.identityPrincipalId
   }
 }
 
 // App outputs
 output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
-output SERVICE_API_NAME string = api.outputs.SERVICE_API_NAME
-output SERVICE_WEATHER_NAME string = weather.outputs.SERVICE_API_NAME
+output SERVICE_MCP_NAME string = api.outputs.SERVICE_API_NAME
 output AZURE_FUNCTION_NAME string = api.outputs.SERVICE_API_NAME
 output AZURE_RESOURCE_GROUP string = rg.name

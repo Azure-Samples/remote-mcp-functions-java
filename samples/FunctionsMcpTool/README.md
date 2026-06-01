@@ -1,13 +1,13 @@
 # FunctionsMcpTool Sample
 
-A sample MCP server built with Azure Functions (Java) that demonstrates saving and retrieving code snippets using Azure Blob Storage.
+A sample MCP server built with Azure Functions (Java) that demonstrates various MCP tools.
 
 ## What It Does
 
 This sample exposes three MCP tools:
 
 | Tool | Description |
-|------|-------------|
+| --- | --- |
 | **HelloWorld** | Says hello and logs the messages you provide. |
 | **SaveSnippets** | Saves a text snippet to Azure Blob Storage. |
 | **GetSnippets** | Retrieves a previously saved snippet by name. |
@@ -59,10 +59,58 @@ Save this snippet as snippet1
 Retrieve snippet1 and apply to MyFile.java
 ```
 
+## Deploy to Azure
+
+### 1. Sign in and create an environment
+
+```bash
+azd auth login
+
+# This also becomes the resource group name
+azd env new <environment-name>
+```
+
+### 2. Configure Entra authentication
+
+Pre-authorize VS Code to request access tokens from Microsoft Entra:
+
+```bash
+azd env set PRE_AUTHORIZED_CLIENT_IDS aebc6443-996d-45c2-90f0-388ff96faa56
+```
+
+**Optional:** Enable VNet isolation:
+
+```bash
+azd env set VNET_ENABLED true
+```
+
+### 3. Deploy
+
+```bash
+azd up
+```
+
+### 4. Connect to the remote MCP server
+
+After deployment, open **.vscode/mcp.json** and click **Start** above *remote-mcp-function*. Enter the `functionapp-name` from your azd output (or `/.azure/*/.env`). You'll be prompted to authenticate with Microsoft — click **Allow** and sign in with your Azure subscription email.
+
+> [!TIP]
+> A successful connection shows the number of tools the server has. Click **More... -> Show Output** for details on the VS Code ↔ server interactions.
+
+## Redeploy and clean up
+
+**Redeploy:** Run `azd up` as many times as needed to deploy code updates.
+
+**Clean up:** Delete all Azure resources when done:
+
+```shell
+azd down
+```
+
 ## Source Code
 
 | File | Description |
-|------|-------------|
+| --- | --- |
 | [HelloWorld.java](src/main/java/com/function/HelloWorld.java) | Simple tool that logs messages and says hello. |
 | [Snippets.java](src/main/java/com/function/Snippets.java) | Save and retrieve snippets using `@BlobOutput` / `@BlobInput` bindings. |
 | [McpToolInvocationContext.java](src/main/java/com/function/model/McpToolInvocationContext.java) | POJO for the MCP tool invocation context. |
@@ -99,13 +147,20 @@ public String saveSnippet(
 
 ## Troubleshooting
 
+| Problem | Solution |
+| --- | --- |
+| Connection refused locally | Ensure Azurite is running |
+| API version not supported by Azurite | Pull the latest image: `docker pull mcr.microsoft.com/azure-storage/azurite` |
+| `mvn clean package` fails | Ensure JDK 17+ is on your PATH (`java -version`) |
+| `azd up` provision succeeded but deploy immediately failed: `unable to find a resource tagged with 'azd-service-name: mcp'` | The tag was provisioned but not propagated yet when `azd deploy` looked it up — run `azd deploy` again |
+| `azd deploy` fails with Kudu restart error: `deployment was partially successful: [KuduSpecializer] Kudu has been restarted after package deployed` | Transient error — run `azd deploy` again |
+
 ### Image tools cause "Could not process image" errors in VS Code
 
 When using tools that return image content (`renderImage`, `getMultiContent`), you may see:
 
-```
+```text
 Request Failed: 400 {"message":"Could not process image"}
 ```
 
 **What's happening:** The tools are returning content correctly — the function logic is working as expected. The image is returned and displayed successfully on the first response. However, on your *next* message, VS Code sends the full conversation history (including the image) back to the language model. The model endpoint may reject the image data in the history, causing the 400 error. This is a chat rendering/infrastructure issue, not a problem with the function app or MCP tool implementation.
-

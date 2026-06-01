@@ -30,7 +30,7 @@ Azure Functions makes it easy to build both.
 The UI must be bundled before running the function app:
 
 ```bash
-cd app
+cd samples/McpWeatherApp/app
 npm install
 npm run build
 cd ..
@@ -54,6 +54,54 @@ Open **.vscode/mcp.json** at the repo root. Find the server called *local-mcp-fu
 ### 4. Prompt the Agent
 
 Ask Copilot: "What's the weather in Seattle?"
+
+## Deploy to Azure
+
+### 1. Sign in and create an environment
+
+```bash
+azd auth login
+
+# This also becomes the resource group name
+azd env new <environment-name>
+```
+
+### 2. Configure Entra authentication
+
+Pre-authorize VS Code to request access tokens from Microsoft Entra:
+
+```bash
+azd env set PRE_AUTHORIZED_CLIENT_IDS aebc6443-996d-45c2-90f0-388ff96faa56
+```
+
+**Optional:** Enable VNet isolation:
+
+```bash
+azd env set VNET_ENABLED true
+```
+
+### 3. Deploy
+
+```bash
+azd up
+```
+
+### 4. Connect to the remote MCP server
+
+After deployment, open **.vscode/mcp.json** and click **Start** above *remote-mcp-function*. Enter the `functionapp-name` from your azd output (or `/.azure/*/.env`). You'll be prompted to authenticate with Microsoft — click **Allow** and sign in with your Azure subscription email.
+
+> [!TIP]
+> A successful connection shows the number of tools the server has. Click **More... -> Show Output** for details on the VS Code ↔ server interactions.
+
+## Redeploy and clean up
+
+**Redeploy:** Run `azd up` as many times as needed to deploy code updates.
+
+**Clean up:** Delete all Azure resources when done:
+
+```shell
+azd down
+```
 
 ## Source Code
 
@@ -142,10 +190,17 @@ The frontend in `app/src/weather-app.ts` receives the tool result and renders th
 ## Project Structure
 
 | Path | Description |
-|------|-------------|
+| ------ | ----------- |
 | [WeatherFunction.java](src/main/java/com/function/weather/WeatherFunction.java) | MCP tool + resource definitions |
 | [WeatherService.java](src/main/java/com/function/weather/WeatherService.java) | Open-Meteo API client (geocoding + weather) |
 | [WeatherResult.java](src/main/java/com/function/weather/WeatherResult.java) | Weather data POJO |
 | [WeatherError.java](src/main/java/com/function/weather/WeatherError.java) | Error response POJO |
 | [app/](app/) | Vite + TypeScript weather widget UI |
 | [app/src/weather-app.ts](app/src/weather-app.ts) | Frontend entry point |
+
+## Troubleshooting
+
+| Problem | Solution |
+| ------- | --------- |
+| `azd up` provision succeeded but deploy immediately failed: `unable to find a resource tagged with 'azd-service-name: mcp'` | The tag was provisioned but not propagated yet when `azd deploy` looked it up — run `azd deploy` again |
+| `azd deploy` fails with Kudu restart error: `deployment was partially successful: [KuduSpecializer] Kudu has been restarted after package deployed` | Transient error — run `azd deploy` again |
