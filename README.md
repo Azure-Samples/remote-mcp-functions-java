@@ -36,17 +36,17 @@ If you're looking for samples in other languages, see: [.NET/C#](https://github.
 
 | Project | Path | Description |
 |---------|------|-------------|
-| **FunctionsMcpTool** | [`samples/FunctionsMcpTool/`](samples/FunctionsMcpTool/) | MCP tools with Azure Blob Storage — say hello, save and retrieve code snippets. |
+| **FunctionsMcpTool** | [`samples/FunctionsMcpTool/`](samples/FunctionsMcpTool/) | MCP tools, prompts, and structured content; includes blob storage tools, prompt templates, image content, and multi-content responses. |
 | **McpWeatherApp** | [`samples/McpWeatherApp/`](samples/McpWeatherApp/) | MCP App with an interactive weather UI (MCP tool + resource + metadata). |
 
 ## Run locally
 
 Each project has its own README with instructions for running locally, connecting to the MCP server, deploying to Azure, and more:
 
-- [FunctionsMcpTool README](samples/FunctionsMcpTool/README.md)
-- [McpWeatherApp README](samples/McpWeatherApp/README.md)
++ [FunctionsMcpTool README](samples/FunctionsMcpTool/README.md)
++ [McpWeatherApp README](samples/McpWeatherApp/README.md)
 
 ## Next Steps
 
 + Learn more about the [Azure Functions MCP extension](https://learn.microsoft.com/azure/azure-functions/functions-bindings-mcp?pivots=programming-language-typescript)
-+ Follow our blog posts on [Azure SDK Blog](https://devblogs.microsoft.com/azure-sdk) and [Tech Community](https://techcommunity.microsoft.com/category/azure/blog/appsonazureblog) for updates. 
++ Follow our blog posts on [Azure SDK Blog](https://devblogs.microsoft.com/azure-sdk) and [Tech Community](https://techcommunity.microsoft.com/category/azure/blog/appsonazureblog) for updates.
