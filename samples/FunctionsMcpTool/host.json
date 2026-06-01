@@ -3,5 +3,12 @@
   "extensionBundle": {
     "id": "Microsoft.Azure.Functions.ExtensionBundle.Preview",
     "version": "[4.41, 5.0.0)"
+  },
+  "extensions": {
+    "mcp": {
+      "system": {
+        "webhookAuthorizationLevel": "Anonymous"
+      }
+    }
   }
 }

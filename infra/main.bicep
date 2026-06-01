@@ -15,6 +15,16 @@ param environmentName string
 })
 param location string
 param vnetEnabled bool
+
+@description('References application or service contact information from a Service or Asset Management database')
+param serviceManagementReference string = ''
+
+@description('Comma-separated list of client application IDs to pre-authorize for accessing the MCP API (optional)')
+param preAuthorizedClientIds string = ''
+
+@description('Enable Microsoft Entra ID authentication (Easy Auth) for the deployed function app')
+param enableAuth bool = true
+
 param serviceName string = ''
 param userAssignedIdentityName string = ''
 param applicationInsightsName string = ''
@@ -30,6 +40,9 @@ var resourceToken = toLower(uniqueString(subscription().id, environmentName, loc
 var tags = { 'azd-env-name': environmentName }
 var functionAppName = !empty(serviceName) ? serviceName : '${abbrs.webSitesFunctions}${resourceToken}'
 var deploymentStorageContainerName = 'app-package-${take(toLower(functionAppName), 32)}-${take(toLower(uniqueString(functionAppName, resourceToken)), 7)}'
+
+// Convert comma-separated string to array for pre-authorized client IDs
+var preAuthorizedClientIdsArray = !empty(preAuthorizedClientIds) ? map(split(preAuthorizedClientIds, ','), clientId => trim(clientId)) : []
 
 // Organize resources in a resource group
 resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
@@ -64,6 +77,22 @@ module appServicePlan './core/host/appserviceplan.bicep' = {
   }
 }
 
+// Entra ID application registration for authentication (optional, controlled by enableAuth)
+module entraApp 'app/entra.bicep' = if (enableAuth) {
+  name: 'entraApp'
+  scope: rg
+  params: {
+    appUniqueName: '${functionAppName}-app'
+    appDisplayName: 'MCP Authorization App (${functionAppName})'
+    serviceManagementReference: serviceManagementReference
+    functionAppHostname: '${functionAppName}.azurewebsites.net'
+    preAuthorizedClientIds: preAuthorizedClientIdsArray
+    managedIdentityClientId: userAssignedIdentity.outputs.identityClientId
+    managedIdentityPrincipalId: userAssignedIdentity.outputs.identityPrincipalId
+    tags: tags
+  }
+}
+
 // Function App
 module api './app/api.bicep' = {
   name: 'api'
@@ -82,7 +111,13 @@ module api './app/api.bicep' = {
     identityClientId: userAssignedIdentity.outputs.identityClientId
     serviceName: 'mcp'
     appSettings: {}
-    virtualNetworkSubnetId: !vnetEnabled ? '' : serviceVirtualNetwork.outputs.appSubnetID
+    virtualNetworkSubnetId: !vnetEnabled ? '' : serviceVirtualNetwork!.outputs.appSubnetID
+    // Authorization parameters (passed only when auth is enabled)
+    authClientId: enableAuth ? entraApp!.outputs.applicationId : ''
+    authIdentifierUri: enableAuth ? entraApp!.outputs.identifierUri : ''
+    authExposedScopes: enableAuth ? entraApp!.outputs.exposedScopes : []
+    authTenantId: enableAuth ? tenant().tenantId : ''
+    preAuthorizedClientIds: preAuthorizedClientIdsArray
   }
 }
 
@@ -145,7 +180,7 @@ module storagePrivateEndpoint 'app/storage-PrivateEndpoint.bicep' = if (vnetEnab
     location: location
     tags: tags
     virtualNetworkName: !empty(vNetName) ? vNetName : '${abbrs.networkVirtualNetworks}${resourceToken}'
-    subnetName: !vnetEnabled ? '' : serviceVirtualNetwork.outputs.peSubnetName
+    subnetName: !vnetEnabled ? '' : serviceVirtualNetwork!.outputs.peSubnetName
     resourceName: storage.outputs.name
   }
 }
@@ -180,5 +215,17 @@ module appInsightsRoleAssignment './core/monitor/appinsights-access.bicep' = {
 output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output SERVICE_MCP_NAME string = api.outputs.SERVICE_API_NAME
+output SERVICE_MCP_DEFAULT_HOSTNAME string = api.outputs.SERVICE_MCP_DEFAULT_HOSTNAME
 output AZURE_FUNCTION_NAME string = api.outputs.SERVICE_API_NAME
 output AZURE_RESOURCE_GROUP string = rg.name
+
+// Entra App outputs (only when auth is enabled)
+output ENTRA_APPLICATION_ID string = enableAuth ? entraApp!.outputs.applicationId : ''
+output ENTRA_APPLICATION_OBJECT_ID string = enableAuth ? entraApp!.outputs.applicationObjectId : ''
+output ENTRA_SERVICE_PRINCIPAL_ID string = enableAuth ? entraApp!.outputs.servicePrincipalId : ''
+output ENTRA_IDENTIFIER_URI string = enableAuth ? entraApp!.outputs.identifierUri : ''
+
+// Authorization outputs
+output AUTH_ENABLED bool = enableAuth ? api.outputs.AUTH_ENABLED : false
+output CONFIGURED_SCOPES string = enableAuth ? api.outputs.CONFIGURED_SCOPES : ''
+output PRE_AUTHORIZED_CLIENT_IDS string = preAuthorizedClientIds
