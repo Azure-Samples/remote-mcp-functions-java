@@ -5,14 +5,10 @@ metadata:
   template: remote-mcp-functions-java@1.0.0
 infra:
   provider: bicep
-  path: ./infra
+  path: ../../infra
 services:
-  api:
-    project: ./samples/FunctionsMcpTool/
-    language: java
-    host: function
-  weather:
-    project: ./samples/McpWeatherApp/
+  mcp:
+    project: .
     language: java
     host: function
     hooks:
