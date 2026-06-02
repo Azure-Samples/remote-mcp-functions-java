@@ -4,12 +4,6 @@
             "type": "promptString",
             "id": "functionapp-name",
             "description": "Azure Functions App Name"
-        },
-        {
-            "type": "promptString",
-            "id": "functionapp-key",
-            "description": "MCP Extension System Key",
-            "password": true
         }
     ],
     "servers": {
