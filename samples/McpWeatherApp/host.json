@@ -13,7 +13,10 @@
     "mcp": {
       "serverName": "Weather App Server",
       "serverVersion": "1.0.0",
-      "instructions": "This is a Weather App that allows you to get current weather information for a specified location."
+      "instructions": "This is a Weather App that allows you to get current weather information for a specified location.",
+      "system": {
+        "webhookAuthorizationLevel": "Anonymous"
+      }
     }
   },
   "extensionBundle": {
